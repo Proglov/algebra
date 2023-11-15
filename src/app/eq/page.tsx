@@ -89,7 +89,7 @@ export default function Equation() {
         for (let i = 0; i < equationsLength; i++) {
           if (i > j && tempMatrix[i][j] === -1) {
             isSwapped = true;
-            for (let k = j; k < equationsLength; k++) {
+            for (let k = j; k <= equationsLength; k++) {
               tempMatrix[i][k] *= -1;
             }
             [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
