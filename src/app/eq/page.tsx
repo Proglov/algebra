@@ -11,7 +11,10 @@ type infoType = {
     row: number,
     rowDevide: number,
     swappedRow: number,
-    reversedSwappedRow: number
+    reversedSwappedRow: number,
+    swappedWithAnotherFirstPara: number | null,
+    swappedWithAnotherSecondPara: number | null,
+    multSwappedWithAnother: number
   },
   zeros: {
     row: number,
@@ -70,57 +73,91 @@ export default function Equation() {
           row: 0,
           rowDevide: 0,
           swappedRow: 0,
-          reversedSwappedRow: 0
+          reversedSwappedRow: 0,
+          swappedWithAnotherFirstPara: null,
+          swappedWithAnotherSecondPara: null,
+          multSwappedWithAnother: 0
         },
         zeros: []
       }
 
       // make 1
-      let isSwapped = false;
-      for (let i = 0; i < equationsLength; i++) {
-        if (i > j && tempMatrix[i][j] === 1) {
-          isSwapped = true;
-          [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
-          info.one.swappedRow = i;
-          break;
-        }
-      }
-      if (!isSwapped) {
+      if (tempMatrix[j][j] === 1) {
+        info.one.isOne = true;
+      } else {
+
+        let isSwapped = false;
+
         for (let i = 0; i < equationsLength; i++) {
-          if (i > j && tempMatrix[i][j] === -1) {
+          if (i > j && tempMatrix[i][j] === 1) {
             isSwapped = true;
-            for (let k = j; k <= equationsLength; k++) {
-              tempMatrix[i][k] *= -1;
-            }
             [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
-            info.one.reversedSwappedRow = i;
+            info.one.swappedRow = i;
             break;
           }
         }
-      }
 
-      if (!isSwapped) {
-        if (tempMatrix[j][j] !== 0 && tempMatrix[j][j] !== 1) {
-          const factor = tempMatrix[j][j];
-          for (let k = j; k <= equationsLength; k++) {
-            tempMatrix[j][k] /= factor;
-          }
-          info.one.devide = factor;
-        } else if (tempMatrix[j][j] === 0) {
+        if (!isSwapped) {
           for (let i = 0; i < equationsLength; i++) {
-            if (tempMatrix[i][j] !== 0) {
-              const factor = tempMatrix[i][j];
+            if (i > j && tempMatrix[i][j] === -1) {
+              isSwapped = true;
               for (let k = j; k <= equationsLength; k++) {
-                tempMatrix[j][k] += tempMatrix[i][k] / factor;
+                tempMatrix[i][k] *= -1;
               }
-              info.one.row = i;
-              info.one.rowDevide = factor;
+              [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
+              info.one.reversedSwappedRow = i;
               break;
             }
           }
-        } else {
-          info.one.isOne = true;
         }
+
+        if (!isSwapped) {
+          let loopHandler = true;
+          let i = j;
+          while (loopHandler && i < equationsLength) {
+            for (let i2 = i + 1; i2 < equationsLength; i2++) {
+              const def = tempMatrix[i][j] % tempMatrix[i2][j]
+              if (def === 1) {
+                const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
+                info.one.swappedWithAnotherFirstPara = i;
+                info.one.swappedWithAnotherSecondPara = i2;
+                info.one.multSwappedWithAnother = mult;
+                for (let k = 0; k <= equationsLength; k++) {
+                  tempMatrix[i][k] -= tempMatrix[i2][k] * mult
+                }
+                if (i !== j) [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
+                loopHandler = false;
+                isSwapped = true;
+                break;
+              }
+            }
+            i++;
+          }
+        }
+
+        if (!isSwapped) {
+          if (tempMatrix[j][j] !== 0) {
+            const factor = tempMatrix[j][j];
+            for (let k = j; k <= equationsLength; k++) {
+              tempMatrix[j][k] /= factor;
+            }
+            info.one.devide = factor;
+          } else if (tempMatrix[j][j] === 0) {
+            for (let i = 0; i < equationsLength; i++) {
+              if (tempMatrix[i][j] !== 0) {
+                const factor = tempMatrix[i][j];
+                for (let k = j; k <= equationsLength; k++) {
+                  tempMatrix[j][k] += tempMatrix[i][k] / factor;
+                }
+                info.one.row = i;
+                info.one.rowDevide = factor;
+                break;
+              }
+            }
+          }
+        }
+
+
       }
 
       // make 0s
@@ -166,7 +203,7 @@ export default function Equation() {
         <input value={eqNum} onChange={(e) => eqNumChangeHandler(e)} type="number" className="border border-black pl-2" style={{ width: '60px' }} />
         <br />
         <br />
-        <button className={`bg-cyan-500 mt-2 p-2 rounded-lg text-white`} onClick={() => { if (eqNum > 1) { setLevel(2); setArr(eqNum) }; }}>go!</button>
+        <button className={`bg-cyan-500 mt-2 p-2 rounded-lg text-white`} onClick={() => { if (eqNum > 1) { setLevel(2); setArr(eqNum) }; }}>مرحله بعد</button>
       </div>
       <div className={`flex ${level === 2 ? '' : level === 3 ? '' : 'hidden'}`}>
         <div className={`flex justify-center border border-black p-2 relative`} style={{ width: `${68 * eqNum + 20}px` }}>
@@ -210,30 +247,47 @@ export default function Equation() {
           ))}
         </div>
       </div>
-      <button className={`bg-cyan-500 ${level === 2 ? '' : level === 3 ? '' : 'hidden'} mt-2 p-2 rounded-xl`} onClick={() => { setLevel(3); calculate() }}>calculate!</button>
+      <button className={`bg-cyan-500 text-white ${level === 2 ? '' : level === 3 ? '' : 'hidden'} mt-2 p-2 rounded-xl`} onClick={() => { setLevel(3); calculate() }}>محاسبه</button>
       <br />
       <br />
       <div className={`${level === 3 ? '' : 'hidden'}`}>
         {solutions.map((solution, index) => (
-          <div key={index}>
+          <div key={index + 1000}>
             <div dir="rtl" className="text-center">
               {
                 solution.info.one.isOne ? <div>سطر {index + 1} و ستون {index + 1} به خودی خود یک هست و کاریش نداریم</div>
                   : solution.info.one.swappedRow !== 0 ?
                     <div>سطر {solution.info.one.swappedRow + 1} را با سطر {index + 1} جا به جا میکنیم</div>
-                    : solution.info.one.reversedSwappedRow !== 0 ?
-                      <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
-                      : solution.info.one.devide !== 0 ?
-                        <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
-                        : <div> <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span> برابر سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم</div>
+                    : solution.info.one.swappedWithAnotherFirstPara !== null ?
+                      <div>
+                        {
+                          solution.info.one.multSwappedWithAnother !== 1 &&
+                          <>
+                            <span dir="ltr">{solution.info.one.multSwappedWithAnother}</span> <span> برابر </span>
+                          </>
+                        }
+                        سطر &nbsp;
+                        {(solution.info.one.swappedWithAnotherSecondPara as number) + 1} را از سطر {solution.info.one.swappedWithAnotherFirstPara + 1} کم میکنیم و حاصل را با سطر {index + 1} جا به جا میکنیم</div>
+                      : solution.info.one.reversedSwappedRow !== 0 ?
+                        <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
+                        : solution.info.one.devide !== 0 ?
+                          <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
+                          : <div> <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span> برابر سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم</div>
               }
               {
                 solution.info.zeros.map((innerV, innerIndex) => (
-                  <div key={innerIndex}> <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span> برابر سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم </div>
+                  <div key={innerIndex}>
+                    {
+                      innerV.mult !== 1 &&
+                      <>
+                        <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span> برابر
+                      </>
+                    }
+                    سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم </div>
                 ))
               }
             </div>
-            <br /> {/* 16 + 60*(eqnum+1) + 8*(eqnum + 1) = 68eq + 84 */}
+            <br />
             <div className={`flex ${level === 2 ? '' : level === 3 ? '' : 'hidden'}`}>
               <div className={`mx-auto border border-black p-2 relative`} style={{ width: `${68 * eqNum + 90}px` }}>
                 <div className="absolute bg-white" style={{ width: '95%', height: '3px', top: '-1px', left: '50%', transform: 'translateX(-50%)' }} />
