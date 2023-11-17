@@ -42,6 +42,30 @@ export default function Equation() {
         newArr[i][j] = newValue;
         return newArr;
       });
+    } else {
+      setCoefficient(prev => {
+        const newArr = prev.map(row => [...row]);
+        newArr[i][j] = 0;
+        return newArr;
+      });
+    }
+  }
+
+  const onAnswerChangeHandler = (e: ChangeEvent<HTMLInputElement>, index: number) => {
+    setLevel(2)
+    const newValue = parseInt(e.target.value);
+    if (!isNaN(newValue)) {
+      setAnswers(prev => {
+        const newArr = [...prev];
+        newArr[index] = newValue;
+        return newArr;
+      })
+    } else {
+      setAnswers(prev => {
+        const newArr = [...prev];
+        newArr[index] = 0;
+        return newArr;
+      })
     }
   }
 
@@ -111,27 +135,21 @@ export default function Equation() {
           }
         }
 
-        if (!isSwapped) {
-          let loopHandler = true;
-          let i = j;
-          while (loopHandler && i < equationsLength) {
-            for (let i2 = i + 1; i2 < equationsLength; i2++) {
-              const def = tempMatrix[i][j] % tempMatrix[i2][j]
-              if (def === 1) {
-                const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
-                info.one.swappedWithAnotherFirstPara = i;
-                info.one.swappedWithAnotherSecondPara = i2;
-                info.one.multSwappedWithAnother = mult;
-                for (let k = 0; k <= equationsLength; k++) {
-                  tempMatrix[i][k] -= tempMatrix[i2][k] * mult
-                }
-                if (i !== j) [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
-                loopHandler = false;
-                isSwapped = true;
-                break;
+        for (let i = j; i < equationsLength && !isSwapped; i++) {
+          for (let i2 = i + 1; i2 < equationsLength; i2++) {
+            const def = tempMatrix[i][j] % tempMatrix[i2][j]
+            if (def === 1) {
+              const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
+              info.one.swappedWithAnotherFirstPara = i;
+              info.one.swappedWithAnotherSecondPara = i2;
+              info.one.multSwappedWithAnother = mult;
+              for (let k = 0; k <= equationsLength; k++) {
+                tempMatrix[i][k] -= tempMatrix[i2][k] * mult
               }
+              if (i !== j) [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
+              isSwapped = true;
+              break;
             }
-            i++;
           }
         }
 
@@ -142,7 +160,7 @@ export default function Equation() {
               tempMatrix[j][k] /= factor;
             }
             info.one.devide = factor;
-          } else if (tempMatrix[j][j] === 0) {
+          } else {
             for (let i = 0; i < equationsLength; i++) {
               if (tempMatrix[i][j] !== 0) {
                 const factor = tempMatrix[i][j];
@@ -216,7 +234,7 @@ export default function Equation() {
                     <input
                       value={value}
                       onChange={(e) => onChangeHandler(e, rowIndex, colIndex)}
-                      type="number"
+                      type="text"
                       className="border mb-1 border-black pl-2"
                       style={{ width: "60px" }}
                     />
@@ -235,12 +253,8 @@ export default function Equation() {
             <input
               key={index}
               value={v}
-              onChange={(e) => setAnswers(prev => {
-                const newArr = [...prev];
-                newArr[index] = parseInt(e.target.value);
-                return newArr;
-              })}
-              type="number"
+              onChange={(e) => onAnswerChangeHandler(e, index)}
+              type="text"
               className="border border-black pl-2"
               style={{ width: "60px" }}
             />
@@ -272,7 +286,15 @@ export default function Equation() {
                         <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
                         : solution.info.one.devide !== 0 ?
                           <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
-                          : <div> <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span> برابر سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم</div>
+                          : <div>
+                            {
+                              solution.info.one.rowDevide !== 1 &&
+                              <>
+                                <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span>/1 برابر&nbsp;
+                              </>
+                            }
+                            سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم
+                          </div>
               }
               {
                 solution.info.zeros.map((innerV, innerIndex) => (
@@ -280,10 +302,11 @@ export default function Equation() {
                     {
                       innerV.mult !== 1 &&
                       <>
-                        <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span> برابر
+                        <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span>  برابر&nbsp;
                       </>
                     }
-                    سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم </div>
+                    سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم
+                  </div>
                 ))
               }
             </div>
@@ -295,7 +318,7 @@ export default function Equation() {
                   {solution.array.map((arr, rowIndex) => (
                     <React.Fragment key={rowIndex}>
                       {arr.map((value, colIndex) => (
-                        <>
+                        <React.Fragment key={colIndex * 221}>
                           <span
                             key={rowIndex * eqNum + colIndex}
                             style={{ width: "60px" }}
@@ -307,7 +330,7 @@ export default function Equation() {
                           {
                             (colIndex + 1) % (eqNum + 1) === 0 && <br />
                           }
-                        </>
+                        </React.Fragment>
                       ))}
                     </React.Fragment>
                   ))}

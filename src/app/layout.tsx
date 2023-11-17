@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'جبر خطی کاربردی',
-  creator: 'Mohammad ParVZ'
+  creator: 'Doctor ParVZ'
 }
 
 export default function RootLayout({
