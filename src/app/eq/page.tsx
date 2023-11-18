@@ -7,6 +7,7 @@ type NumberGrid = number[][];
 type infoType = {
   one: {
     isOne: Boolean,
+    isMinusOne: Boolean,
     devide: number,
     row: number,
     rowDevide: number,
@@ -93,6 +94,7 @@ export default function Equation() {
       const info: infoType = {
         one: {
           isOne: false,
+          isMinusOne: false,
           devide: 0,
           row: 0,
           rowDevide: 0,
@@ -106,14 +108,25 @@ export default function Equation() {
       }
 
       // make 1
-      if (tempMatrix[j][j] === 1) {
+
+      if (tempMatrix[j][j] === 1) { //check if it's already one
+
         info.one.isOne = true;
+
+      } else if (tempMatrix[j][j] === -1) {  //check if it's minus one
+
+        for (let k = j; k <= equationsLength; k++) {
+          tempMatrix[j][k] *= -1;
+        }
+        info.one.isMinusOne = true;
+
       } else {
 
         let isSwapped = false;
 
-        for (let i = 0; i < equationsLength; i++) {
-          if (i > j && tempMatrix[i][j] === 1) {
+        //check if any index is one
+        for (let i = j + 1; i < equationsLength; i++) {
+          if (tempMatrix[i][j] === 1) {
             isSwapped = true;
             [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
             info.one.swappedRow = i;
@@ -121,9 +134,10 @@ export default function Equation() {
           }
         }
 
+        //check if any index is minus one
         if (!isSwapped) {
-          for (let i = 0; i < equationsLength; i++) {
-            if (i > j && tempMatrix[i][j] === -1) {
+          for (let i = j + 1; i < equationsLength; i++) {
+            if (tempMatrix[i][j] === -1) {
               isSwapped = true;
               for (let k = j; k <= equationsLength; k++) {
                 tempMatrix[i][k] *= -1;
@@ -135,10 +149,12 @@ export default function Equation() {
           }
         }
 
+        //check if there is two number with modulus 1
         for (let i = j; i < equationsLength && !isSwapped; i++) {
-          for (let i2 = i + 1; i2 < equationsLength; i2++) {
+          for (let i2 = j; i2 < equationsLength; i2++) {
             const def = tempMatrix[i][j] % tempMatrix[i2][j]
             if (def === 1) {
+              console.log('i: ', i, ' j: ', j)
               const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
               info.one.swappedWithAnotherFirstPara = i;
               info.one.swappedWithAnotherSecondPara = i2;
@@ -153,6 +169,7 @@ export default function Equation() {
           }
         }
 
+        //last option
         if (!isSwapped) {
           if (tempMatrix[j][j] !== 0) {
             const factor = tempMatrix[j][j];
@@ -193,6 +210,7 @@ export default function Equation() {
       }
 
 
+      //push to the permanent matrix
       for (let i = 0; i < augmentedMatrix.length; i++) {
         for (let j = 0; j < augmentedMatrix[i].length; j++) {
           augmentedMatrix[i][j] = tempMatrix[i][j];
@@ -200,11 +218,13 @@ export default function Equation() {
       }
 
 
+      //push the results
       result.push({
         array: tempMatrix,
         info
       });
     }
+
     setSolutions(result);
   }
 
@@ -270,31 +290,33 @@ export default function Equation() {
             <div dir="rtl" className="text-center">
               {
                 solution.info.one.isOne ? <div>سطر {index + 1} و ستون {index + 1} به خودی خود یک هست و کاریش نداریم</div>
-                  : solution.info.one.swappedRow !== 0 ?
-                    <div>سطر {solution.info.one.swappedRow + 1} را با سطر {index + 1} جا به جا میکنیم</div>
-                    : solution.info.one.swappedWithAnotherFirstPara !== null ?
-                      <div>
-                        {
-                          solution.info.one.multSwappedWithAnother !== 1 &&
-                          <>
-                            <span dir="ltr">{solution.info.one.multSwappedWithAnother}</span> <span> برابر </span>
-                          </>
-                        }
-                        سطر &nbsp;
-                        {(solution.info.one.swappedWithAnotherSecondPara as number) + 1} را از سطر {solution.info.one.swappedWithAnotherFirstPara + 1} کم میکنیم و حاصل را با سطر {index + 1} جا به جا میکنیم</div>
-                      : solution.info.one.reversedSwappedRow !== 0 ?
-                        <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
-                        : solution.info.one.devide !== 0 ?
-                          <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
-                          : <div>
-                            {
-                              solution.info.one.rowDevide !== 1 &&
-                              <>
-                                <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span>/1 برابر&nbsp;
-                              </>
-                            }
-                            سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم
-                          </div>
+                  : solution.info.one.isMinusOne ?
+                    <div>سطر {index + 1} را قرینه میکنیم</div>
+                    : solution.info.one.swappedRow !== 0 ?
+                      <div>سطر {solution.info.one.swappedRow + 1} را با سطر {index + 1} جا به جا میکنیم</div>
+                      : solution.info.one.swappedWithAnotherFirstPara !== null ?
+                        <div>
+                          {
+                            solution.info.one.multSwappedWithAnother !== 1 &&
+                            <>
+                              <span dir="ltr">{solution.info.one.multSwappedWithAnother}</span> <span> برابر </span>
+                            </>
+                          }
+                          سطر &nbsp;
+                          {(solution.info.one.swappedWithAnotherSecondPara as number) + 1} را از سطر {solution.info.one.swappedWithAnotherFirstPara + 1} کم میکنیم و حاصل را با سطر {index + 1} جا به جا میکنیم</div>
+                        : solution.info.one.reversedSwappedRow !== 0 ?
+                          <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
+                          : solution.info.one.devide !== 0 ?
+                            <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
+                            : <div>
+                              {
+                                solution.info.one.rowDevide !== 1 &&
+                                <>
+                                  <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span>/1 برابر&nbsp;
+                                </>
+                              }
+                              سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم
+                            </div>
               }
               {
                 solution.info.zeros.map((innerV, innerIndex) => (
