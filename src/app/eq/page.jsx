@@ -1,64 +1,49 @@
 'use client'
 
-import React, { useState, ChangeEvent } from "react"
+import React, { useState } from "react"
 
-
-type NumberGrid = number[][];
-type infoType = {
-  one: {
-    isOne: Boolean,
-    devide: number,
-    row: number,
-    rowDevide: number,
-    swappedRow: number,
-    reversedSwappedRow: number,
-    swappedWithAnotherFirstPara: number | null,
-    swappedWithAnotherSecondPara: number | null,
-    multSwappedWithAnother: number
-  },
-  zeros: {
-    row: number,
-    mult: number
-  }[]
-}
-type solutionType = {
-  info: infoType,
-  array: NumberGrid
-}
 
 export default function Equation() {
   const [level, setLevel] = useState(1);
   const [eqNum, setEqNum] = useState(0);
-  const [coefficient, setCoefficient] = useState<NumberGrid>([[]])
-  const [answers, setAnswers] = useState<number[]>([]);
-  const [solutions, setSolutions] = useState<solutionType[]>([]);
+  const [coefficient, setCoefficient] = useState([[]])
+  const [answers, setAnswers] = useState([]);
+  const [solutions, setSolutions] = useState([]);
 
-  const onChangeHandler = (e: ChangeEvent<HTMLInputElement>, i: number, j: number) => {
+  const onChangeHandler = (e, i, j) => {
     setLevel(2)
-    const newValue = parseInt(e.target.value);
-    if (!isNaN(newValue)) {
-      setCoefficient(prev => {
-        const newArr = prev.map(row => [...row]);
-        newArr[i][j] = newValue;
-        return newArr;
-      });
-    }
+    setCoefficient(prev => {
+      const newArr = prev.map(row => [...row]);
+      newArr[i][j] = e.target.value;
+      return newArr;
+    });
   }
 
-  const setArr = (num: number) => {
-    const arr = Array(num).fill(Array(num).fill(0));
-    const arr2 = Array(num).fill(0);
+  const onAnswerChangeHandler = (e, index) => {
+    setLevel(2)
+    setAnswers(prev => {
+      const newArr = [...prev];
+      newArr[index] = e.target.value;
+      return newArr;
+    })
+  }
+
+  const setArr = (num) => {
+    const arr = Array(num).fill(Array(num).fill(''));
+    const arr2 = Array(num).fill('');
     setCoefficient(arr);
     setAnswers(arr2)
   };
 
-  const eqNumChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+  const eqNumChangeHandler = (e) => {
     const newValue = parseInt(e.target.value);
     if (!isNaN(newValue)) setEqNum(newValue);
   }
 
   const calculate = () => {
-    const augmentedMatrix = coefficient.map((row, rowIndex) => [...row, answers[rowIndex]]);
+    const numCoe = coefficient.map(row => row.map(v => parseFloat(v)))
+    const numAns = answers.map(v => parseFloat(v))
+    const augmentedMatrix = numCoe.map((row, rowIndex) => [...row, numAns[rowIndex]]);
     const equationsLength = augmentedMatrix.length;
 
     const result = [];
@@ -66,9 +51,10 @@ export default function Equation() {
     // Applying Gauss-Jordan elimination 
     for (let j = 0; j < equationsLength; j++) {
       const tempMatrix = augmentedMatrix.map((row) => [...row]);
-      const info: infoType = {
+      const info = {
         one: {
           isOne: false,
+          isMinusOne: false,
           devide: 0,
           row: 0,
           rowDevide: 0,
@@ -82,14 +68,25 @@ export default function Equation() {
       }
 
       // make 1
-      if (tempMatrix[j][j] === 1) {
+
+      if (tempMatrix[j][j] === 1) { //check if it's already one
+
         info.one.isOne = true;
+
+      } else if (tempMatrix[j][j] === -1) {  //check if it's minus one
+
+        for (let k = j; k <= equationsLength; k++) {
+          tempMatrix[j][k] *= -1;
+        }
+        info.one.isMinusOne = true;
+
       } else {
 
         let isSwapped = false;
 
-        for (let i = 0; i < equationsLength; i++) {
-          if (i > j && tempMatrix[i][j] === 1) {
+        //check if any index is one
+        for (let i = j + 1; i < equationsLength; i++) {
+          if (tempMatrix[i][j] === 1) {
             isSwapped = true;
             [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
             info.one.swappedRow = i;
@@ -97,9 +94,10 @@ export default function Equation() {
           }
         }
 
+        //check if any index is minus one
         if (!isSwapped) {
-          for (let i = 0; i < equationsLength; i++) {
-            if (i > j && tempMatrix[i][j] === -1) {
+          for (let i = j + 1; i < equationsLength; i++) {
+            if (tempMatrix[i][j] === -1) {
               isSwapped = true;
               for (let k = j; k <= equationsLength; k++) {
                 tempMatrix[i][k] *= -1;
@@ -111,30 +109,27 @@ export default function Equation() {
           }
         }
 
-        if (!isSwapped) {
-          let loopHandler = true;
-          let i = j;
-          while (loopHandler && i < equationsLength) {
-            for (let i2 = i + 1; i2 < equationsLength; i2++) {
-              const def = tempMatrix[i][j] % tempMatrix[i2][j]
-              if (def === 1) {
-                const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
-                info.one.swappedWithAnotherFirstPara = i;
-                info.one.swappedWithAnotherSecondPara = i2;
-                info.one.multSwappedWithAnother = mult;
-                for (let k = 0; k <= equationsLength; k++) {
-                  tempMatrix[i][k] -= tempMatrix[i2][k] * mult
-                }
-                if (i !== j) [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
-                loopHandler = false;
-                isSwapped = true;
-                break;
+        //check if there is two number with modulus 1
+        for (let i = j; i < equationsLength && !isSwapped; i++) {
+          for (let i2 = j; i2 < equationsLength; i2++) {
+            const def = tempMatrix[i][j] % tempMatrix[i2][j]
+            if (def === 1) {
+              console.log('i: ', i, ' j: ', j)
+              const mult = (tempMatrix[i][j] - def) / tempMatrix[i2][j];
+              info.one.swappedWithAnotherFirstPara = i;
+              info.one.swappedWithAnotherSecondPara = i2;
+              info.one.multSwappedWithAnother = mult;
+              for (let k = 0; k <= equationsLength; k++) {
+                tempMatrix[i][k] -= tempMatrix[i2][k] * mult
               }
+              if (i !== j) [tempMatrix[i], tempMatrix[j]] = [tempMatrix[j], tempMatrix[i]];
+              isSwapped = true;
+              break;
             }
-            i++;
           }
         }
 
+        //last option
         if (!isSwapped) {
           if (tempMatrix[j][j] !== 0) {
             const factor = tempMatrix[j][j];
@@ -142,7 +137,7 @@ export default function Equation() {
               tempMatrix[j][k] /= factor;
             }
             info.one.devide = factor;
-          } else if (tempMatrix[j][j] === 0) {
+          } else {
             for (let i = 0; i < equationsLength; i++) {
               if (tempMatrix[i][j] !== 0) {
                 const factor = tempMatrix[i][j];
@@ -175,6 +170,7 @@ export default function Equation() {
       }
 
 
+      //push to the permanent matrix
       for (let i = 0; i < augmentedMatrix.length; i++) {
         for (let j = 0; j < augmentedMatrix[i].length; j++) {
           augmentedMatrix[i][j] = tempMatrix[i][j];
@@ -182,11 +178,13 @@ export default function Equation() {
       }
 
 
+      //push the results
       result.push({
         array: tempMatrix,
         info
       });
     }
+
     setSolutions(result);
   }
 
@@ -216,7 +214,7 @@ export default function Equation() {
                     <input
                       value={value}
                       onChange={(e) => onChangeHandler(e, rowIndex, colIndex)}
-                      type="number"
+                      type="text"
                       className="border mb-1 border-black pl-2"
                       style={{ width: "60px" }}
                     />
@@ -235,12 +233,8 @@ export default function Equation() {
             <input
               key={index}
               value={v}
-              onChange={(e) => setAnswers(prev => {
-                const newArr = [...prev];
-                newArr[index] = parseInt(e.target.value);
-                return newArr;
-              })}
-              type="number"
+              onChange={(e) => onAnswerChangeHandler(e, index)}
+              type="text"
               className="border border-black pl-2"
               style={{ width: "60px" }}
             />
@@ -256,23 +250,33 @@ export default function Equation() {
             <div dir="rtl" className="text-center">
               {
                 solution.info.one.isOne ? <div>سطر {index + 1} و ستون {index + 1} به خودی خود یک هست و کاریش نداریم</div>
-                  : solution.info.one.swappedRow !== 0 ?
-                    <div>سطر {solution.info.one.swappedRow + 1} را با سطر {index + 1} جا به جا میکنیم</div>
-                    : solution.info.one.swappedWithAnotherFirstPara !== null ?
-                      <div>
-                        {
-                          solution.info.one.multSwappedWithAnother !== 1 &&
-                          <>
-                            <span dir="ltr">{solution.info.one.multSwappedWithAnother}</span> <span> برابر </span>
-                          </>
-                        }
-                        سطر &nbsp;
-                        {(solution.info.one.swappedWithAnotherSecondPara as number) + 1} را از سطر {solution.info.one.swappedWithAnotherFirstPara + 1} کم میکنیم و حاصل را با سطر {index + 1} جا به جا میکنیم</div>
-                      : solution.info.one.reversedSwappedRow !== 0 ?
-                        <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
-                        : solution.info.one.devide !== 0 ?
-                          <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
-                          : <div> <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span> برابر سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم</div>
+                  : solution.info.one.isMinusOne ?
+                    <div>سطر {index + 1} را قرینه میکنیم</div>
+                    : solution.info.one.swappedRow !== 0 ?
+                      <div>سطر {solution.info.one.swappedRow + 1} را با سطر {index + 1} جا به جا میکنیم</div>
+                      : solution.info.one.swappedWithAnotherFirstPara !== null ?
+                        <div>
+                          {
+                            solution.info.one.multSwappedWithAnother !== 1 &&
+                            <>
+                              <span dir="ltr">{solution.info.one.multSwappedWithAnother}</span> <span> برابر </span>
+                            </>
+                          }
+                          سطر &nbsp;
+                          {(solution.info.one.swappedWithAnotherSecondPara) + 1} را از سطر {solution.info.one.swappedWithAnotherFirstPara + 1} کم میکنیم و حاصل را با سطر {index + 1} جا به جا میکنیم</div>
+                        : solution.info.one.reversedSwappedRow !== 0 ?
+                          <div>سطر {solution.info.one.reversedSwappedRow + 1} را قرینه و با سطر {index + 1} جا به جا میکنیم</div>
+                          : solution.info.one.devide !== 0 ?
+                            <div>سطر {index + 1} را تقسیم بر <span dir="ltr">{Math.round(solution.info.one.devide * 100) / 100}</span> میکنیم</div>
+                            : <div>
+                              {
+                                solution.info.one.rowDevide !== 1 &&
+                                <>
+                                  <span dir="ltr">{Math.round(solution.info.one.rowDevide * 1000) / 1000}</span> برابر&nbsp;
+                                </>
+                              }
+                              سطر {solution.info.one.row + 1} را از سطر {index + 1} کم میکنیم
+                            </div>
               }
               {
                 solution.info.zeros.map((innerV, innerIndex) => (
@@ -280,10 +284,11 @@ export default function Equation() {
                     {
                       innerV.mult !== 1 &&
                       <>
-                        <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span> برابر
+                        <span dir="ltr">{Math.round(innerV.mult * 1000) / 1000}</span>  برابر&nbsp;
                       </>
                     }
-                    سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم </div>
+                    سطر {index + 1} را از سطر {innerV.row + 1} کم میکنیم
+                  </div>
                 ))
               }
             </div>
@@ -295,7 +300,7 @@ export default function Equation() {
                   {solution.array.map((arr, rowIndex) => (
                     <React.Fragment key={rowIndex}>
                       {arr.map((value, colIndex) => (
-                        <>
+                        <React.Fragment key={colIndex * 221}>
                           <span
                             key={rowIndex * eqNum + colIndex}
                             style={{ width: "60px" }}
@@ -307,7 +312,7 @@ export default function Equation() {
                           {
                             (colIndex + 1) % (eqNum + 1) === 0 && <br />
                           }
-                        </>
+                        </React.Fragment>
                       ))}
                     </React.Fragment>
                   ))}
