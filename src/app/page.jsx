@@ -9,6 +9,12 @@ export default function Home() {
       <div className='text-purple-700 m-5'>
         <Link href='/sarrus'>محاسبه دترمینان ماتریس 3*3 به روش ساروس</Link>
       </div>
+      <div className='text-purple-700 m-5'>
+        <Link href='/eight'>حل پازل هشت</Link>
+      </div>
+      <div className='text-purple-700 m-5'>
+        <Link href='/sarrus'>طراحی الگوریتم</Link>
+      </div>
     </>
   )
 }
