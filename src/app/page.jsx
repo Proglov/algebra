@@ -13,7 +13,7 @@ export default function Home() {
         <Link href='/eight'>حل پازل هشت</Link>
       </div>
       <div className='text-purple-700 m-5'>
-        <Link href='/sarrus'>طراحی الگوریتم</Link>
+        <Link href='/tarrahi-algorithm'>طراحی الگوریتم</Link>
       </div>
     </>
   )

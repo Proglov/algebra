@@ -112,3 +112,50 @@ export const hightOfTree = node => {
 
     return maxHeight + 1;
 }
+
+// convert the tree into an array of arrays
+export const convertTreeToArray = root => {
+    const result = [];
+    const canvasResult = [];
+    const sizes = [];
+
+    const queue = [root];
+
+    while (queue.length > 0) {
+        const levelSize = queue.length;
+        const currentLevelNodes = [];
+        const currentLevelNodesIndex = [];
+        sizes.push(levelSize)
+        const obj = {
+            prevRowLength: 0,
+            arr: currentLevelNodesIndex
+        }
+
+        for (let i = 0; i < levelSize; i++) {
+            const currentNode = queue.shift();
+            currentLevelNodes.push(currentNode);
+
+            // Add children of the current node to the queue
+            currentNode.children.forEach(child => {
+                queue.push(child);
+                currentLevelNodesIndex.push(i + 1);
+            });
+        }
+        canvasResult.push(obj);
+        result.push(currentLevelNodes);
+    }
+
+    canvasResult.pop();
+    sizes.pop();
+
+    for (let i = 0; i < canvasResult.length; i++) {
+        canvasResult[i].prevRowLength = sizes[i]
+    }
+
+
+    return {
+        graphResult: result,
+        canvasResult
+    };
+};
+

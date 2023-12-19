@@ -123,8 +123,8 @@ export function eightSolver(initial, x, y, final, isManhatan) {
 
         // console.log(min.mat)
 
-        // If min is an answer node or the height is more than 20
-        if (min.cost === 0 || min.level > 20) {
+        // If min is an answer node 
+        if (min.cost === 0) {
             const arr = [];
             arr.push(min)
             actions.push(min.prevMove)
