@@ -7,7 +7,7 @@ export default function Graph({ arr }) {
 
     return (
         <div style={{ position: 'relative', width }} className='mx-auto'>
-            <div className='mt-5 mb-2'>مجموع فرکانس ها: {arr[0][0].totalCost}</div>
+            <div className='mt-5 mb-2 text-center'>مجموع فرکانس ها: {arr[0][0].totalCost}</div>
             <Canvas height={height} width={width} arr={arr} />
             {
                 arr.map((subArr, i) => {

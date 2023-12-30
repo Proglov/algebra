@@ -59,9 +59,12 @@ export default function Home() {
                     )
                   })
                 }
-                <td className="px-6 py-4">
+                {
+                  remain > 0 &&
+                  <td className="px-6 py-4">
 
-                </td>
+                  </td>
+                }
               </tr>
               <tr className="bg-gray-800 border-gray-700 text-white">
                 <th scope="row" className="px-6 py-4 font-medium whitespace-nowrap text-white">
@@ -76,10 +79,14 @@ export default function Home() {
                     )
                   })
                 }
-                <td className="px-6 py-4" style={{ direction: 'rtl' }}>
-                  {remain}&nbsp;
-                  درصد باقی مانده
-                </td>
+                {
+                  remain > 0 &&
+                  <td className="px-6 py-4" style={{ direction: 'rtl' }}>
+                    {remain}&nbsp;
+                    درصد باقی مانده
+                  </td>
+                }
+
               </tr>
             </tbody>
           </table>

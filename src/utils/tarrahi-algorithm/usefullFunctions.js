@@ -73,3 +73,21 @@ export const getNodeArrays = root => {
     traverse(root, 0, 0);
     return result;
 }
+
+export const findLowestTotalCost = array => {
+    if (array.length === 0) {
+        return null; // Return null if the array is empty
+    }
+
+    let lowestCost = array[0]; // Assume the first object has the lowest cost
+
+    for (let i = 1; i < array.length; i++) {
+        const current = array[i];
+
+        if (current[0][0].totalCost < lowestCost[0][0].totalCost) {
+            lowestCost = current; // Update the lowest cost object
+        }
+    }
+
+    return lowestCost;
+}
